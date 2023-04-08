@@ -50,8 +50,12 @@ def get_members(team_name):
         return [member for member in bar.iter(generator)]
 
 
-def match_members(members, search, min_rating):
+def match_members(members, search, min_rating, title):
     for m in members:
+        if title is not None:
+            if m.get('title') != title:
+                continue
+
         if min_rating:
             rating_info = m['perfs'].get('rapid') or m['perfs'].get('blitz')
             if not rating_info:
@@ -81,12 +85,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--team-name', default='chessence', help='%(default)s by default')
     parser.add_argument('--min-rating', type=int, default=None)
+    parser.add_argument('--title', default=None, help='FIDE title to search for')
     parser.add_argument('NAME', help='Name to search for')
     args = parser.parse_args()
 
     members = cached_request(functools.partial(get_members, args.team_name), args.team_name + '-members')
 
-    for m in match_members(members, args.NAME, args.min_rating):
+    for m in match_members(members, args.NAME, args.min_rating, args.title):
         name = ''
         if profile := m.get('profile'):
             if first_name := profile.get('firstName'):
@@ -98,7 +103,9 @@ def main():
             if location := profile.get('location'):
                 name += ', ' + location
 
-        rating_info = m['perfs'].get('rapid', {})
+        rapid_info = m['perfs'].get('rapid', {})
+        blitz_info = m['perfs'].get('blitz', {})
+        rating_info = rapid_info if rapid_info['games'] > 0 else blitz_info
         rating_str = str(rating_info.get('rating', '-')).rjust(4) + ('?' if rating_info.get('prov') else ' ')
 
         print(f'{rating_str} https://lichess.org/@/' + m['id'] + ' ' + name)
