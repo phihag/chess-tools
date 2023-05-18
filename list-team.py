@@ -76,8 +76,10 @@ def match_members(members, search, min_rating, title):
                 names.append(last_name + ', ' + first_name)
             if location := profile.get('location'):
                 names.append(location)
+
+        lower_search = search.lower()
         for n in names:
-            if search in n:
+            if lower_search in n.lower():
                 yield m
                 break
 
