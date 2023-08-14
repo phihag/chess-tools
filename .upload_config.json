@@ -1,0 +1,14 @@
+{
+  "remotes": [
+    {
+      "host": "aufschlagwechsel.de",
+      "port": 622,
+      "dir": "/hosts/phihag.de/chess-tools/",
+      "username": "phihag",
+      "php_baseurl": "https://phihag.de/chess-tools/",
+      "disabled_algorithms": {
+        "pubkeys": ["rsa-sha2-512", "rsa-sha2-256"]
+      }
+    }
+  ]
+}
