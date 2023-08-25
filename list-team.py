@@ -12,6 +12,9 @@ import berserk.clients
 from progress.bar import Bar
 
 
+CACHE_DIR = pathlib.Path(__file__).parent / 'cache'
+
+
 def json_repr(obj):
     if isinstance(obj, datetime.datetime):
         return obj.isoformat()
@@ -20,11 +23,10 @@ def json_repr(obj):
 
 
 def cached_request(func, cache_name):
-    cache_dir = pathlib.Path('cache')
-    cache_dir.mkdir(exist_ok=True)
+    CACHE_DIR.mkdir(exist_ok=True)
     assert re.match(r'^[-._a-zA-Z0-9]+$', cache_name)
-    cache_file = cache_dir / cache_name
-    tmp_file = cache_dir / (cache_name + '.tmp')
+    cache_file = CACHE_DIR / cache_name
+    tmp_file = CACHE_DIR / (cache_name + '.tmp')
 
     if cache_file.exists():
         with cache_file.open() as cache_handle:
