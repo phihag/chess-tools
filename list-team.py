@@ -107,10 +107,13 @@ def main():
             if location := profile.get('location'):
                 name += ', ' + location
 
-        rapid_info = m['perfs'].get('rapid', {})
-        blitz_info = m['perfs'].get('blitz', {})
-        rating_info = rapid_info if rapid_info['games'] > 0 else blitz_info
-        rating_str = str(rating_info.get('rating', '-')).rjust(4) + ('?' if rating_info.get('prov') else ' ')
+        if m.get('disabled'):
+            rating_str = 'CLOSED'
+        else:
+            rapid_info = m['perfs'].get('rapid', {})
+            blitz_info = m['perfs'].get('blitz', {})
+            rating_info = rapid_info if rapid_info['games'] > 0 else blitz_info
+            rating_str = str(rating_info.get('rating', '-')).rjust(4) + ('?' if rating_info.get('prov') else ' ')
 
         print(f'{rating_str} https://lichess.org/@/' + m['id'] + ' ' + name)
 
