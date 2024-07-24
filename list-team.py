@@ -65,7 +65,7 @@ def match_members(members, search, min_rating, title):
             if rating_info['rating'] < min_rating:
                 continue
 
-        names = [m['id'], m['username']]
+        names = [m['id'], m['name']]
 
         if profile := m.get('profile'):
             if first_name := profile.get('firstName'):
