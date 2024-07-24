@@ -40,6 +40,16 @@ def cached_request(func, cache_name):
     return res
 
 
+def _api_get_members(client, team_id):
+    from berserk.formats import NDJSON
+    from berserk import models
+
+    path = f'/api/team/{team_id}/users?full=True'
+    yield from client._r.get(
+        path, fmt=NDJSON, stream=True, converter=models.User.convert
+    )
+
+
 def get_members(team_name):
     session = berserk.TokenSession(os.environ['LICHESS_TOKEN'])
     client = berserk.Client(session=session)
@@ -47,7 +57,7 @@ def get_members(team_name):
     team_info = client.teams._r.get(f'api/team/{team_name}')
     count = team_info['nbMembers']
 
-    generator = client.teams.get_members(team_name)
+    generator = _api_get_members(client, team_name)
     with Bar('downloading members', max=count) as bar:
         return [member for member in bar.iter(generator)]
 
@@ -65,7 +75,11 @@ def match_members(members, search, min_rating, title):
             if rating_info['rating'] < min_rating:
                 continue
 
-        names = [m['id'], m['name']]
+        names = [m['id']]
+        if 'name' in m:
+            names.append(m['name'])
+        if 'username' in m:
+            names.append(m['username'])
 
         if profile := m.get('profile'):
             if first_name := profile.get('firstName'):
