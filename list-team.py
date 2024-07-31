@@ -101,7 +101,7 @@ def match_members(members, search, min_rating, title):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--team-name', default='chessence', help='%(default)s by default')
+    parser.add_argument('-t', '--team-name', default='chessence', help='%(default)s by default')
     parser.add_argument('--min-rating', type=int, default=None)
     parser.add_argument('--title', default=None, help='FIDE title to search for')
     parser.add_argument('NAME', help='Name to search for')
