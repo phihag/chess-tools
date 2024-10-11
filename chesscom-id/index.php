@@ -11,25 +11,29 @@ if ($id) {
 
 	$url = 'https://www.chess.com/callback/user/games?userId=' . \urlencode($id);
 	$numeric_id = \intval($id);
-	$games_json = \file_get_contents($url, false, $context);
-	$games = \json_decode($games_json, true)['games'];
-	$error = null;
-	if ($games === false) {
-		$error = 'Download failed.';
+	$games_json = @\file_get_contents($url, false, $context);
+	if ($games_json === false) {
+		$error = 'Failed to fetch ' . $url . ' (wrong ID?)';
 	} else {
-		$username = null;
-		foreach ($games as $g) {
-			for ($i = 1;$i <= 2;$i++) {
-				$u = $g['user' . $i];
-				if ($u['id'] === $numeric_id) {
-					$username = $u['username'];
-					break;
+		$games = \json_decode($games_json, true)['games'];
+		$error = null;
+		if ($games === false) {
+			$error = 'Download failed.';
+		} else {
+			$username = null;
+			foreach ($games as $g) {
+				for ($i = 1;$i <= 2;$i++) {
+					$u = $g['user' . $i];
+					if ($u['id'] === $numeric_id) {
+						$username = $u['username'];
+						break;
+					}
 				}
+				if ($username) break;
 			}
-			if ($username) break;
-		}
-		if (!$username) {
-			$error = 'Could not find player in ' . \count($games) . ' games.';
+			if (!$username) {
+				$error = 'Could not find player in ' . \count($games) . ' games.';
+			}
 		}
 	}
 }
