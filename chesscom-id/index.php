@@ -13,7 +13,7 @@ if ($id) {
 	$context = \stream_context_create($opts);
 	$error = null;
 
-	$is_uuid = \str_contains($id, '-');
+	$is_uuid = \strpos($id, '-') === false;
 	$url = 'https://www.chess.com/callback/user/id-to-data?ids[]=' . \urlencode($id);
 	$response_json = @\file_get_contents($url, false, $context);
 	if ($response_json === false) {
