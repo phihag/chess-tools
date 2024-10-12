@@ -1,5 +1,8 @@
 <?php
-$id = isset($_GET['id']) ? \intval($_GET['id']) : '';
+
+// Alternative: https://www.chess.com/callback/user/daily/games?limit=1&userId=214563005
+
+$id = isset($_GET['id']) ? $_GET['id'] : '';
 if ($id) {
 	$opts = [
 	    'https' => [
@@ -8,32 +11,20 @@ if ($id) {
 	    ],
 	];
 	$context = \stream_context_create($opts);
+	$error = null;
 
-	$url = 'https://www.chess.com/callback/user/games?userId=' . \urlencode($id);
-	$numeric_id = \intval($id);
-	$games_json = @\file_get_contents($url, false, $context);
-	if ($games_json === false) {
+	$is_uuid = \str_contains($id, '-');
+	$url = 'https://www.chess.com/callback/user/id-to-data?ids[]=' . \urlencode($id);
+	$response_json = @\file_get_contents($url, false, $context);
+	if ($response_json === false) {
 		$error = 'Failed to fetch ' . $url . ' (wrong ID?)';
 	} else {
-		$games = \json_decode($games_json, true)['games'];
-		$error = null;
-		if ($games === false) {
+		$response_data = \json_decode($response_json, true);
+        if ($response_data === false) {
 			$error = 'Download failed.';
 		} else {
-			$username = null;
-			foreach ($games as $g) {
-				for ($i = 1;$i <= 2;$i++) {
-					$u = $g['user' . $i];
-					if ($u['id'] === $numeric_id) {
-						$username = $u['username'];
-						break;
-					}
-				}
-				if ($username) break;
-			}
-			if (!$username) {
-				$error = 'Could not find player in ' . \count($games) . ' games.';
-			}
+			$values = \array_values($response_data);
+			$username = $values[0]['username'];
 		}
 	}
 }
@@ -61,7 +52,7 @@ input, button {
 
 <h1>Look up chess.com user by ID</h1>
 <form method="get">
-<input pattern="^[0-9]+$" required="required" title="Must be a number" placeholder="numeric ID" name="id" value="" autofocus="autofocus">
+<input pattern="^[0-9]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" required="required" title="Must be a number or UUID" placeholder="numeric ID or UUID" name="id" value="" autofocus="autofocus" size="30">
 <button type="submit" style="margin-left: 10px">Look up username</button>
 </form>
 
