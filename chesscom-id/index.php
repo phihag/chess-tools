@@ -24,7 +24,11 @@ if ($id) {
 			$error = 'Download failed.';
 		} else {
 			$values = \array_values($response_data);
-			$username = $values[0]['username'];
+			if (\count($values) !== 1) {
+				$error = 'Cannot find user';
+			} else {
+				$username = $values[0]['username'];
+			}
 		}
 	}
 }
