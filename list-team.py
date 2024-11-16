@@ -44,10 +44,12 @@ def _api_get_members(client, team_id):
     from berserk.formats import NDJSON
     from berserk import models
 
-    path = f'/api/team/{team_id}/users?full=True'
-    yield from client._r.get(
-        path, fmt=NDJSON, stream=True, converter=models.User.convert
-    )
+    path = f'/api/team/{team_id}/users'
+    team_members = list(client._r.get(path, fmt=NDJSON, stream=True))
+    for team_member in team_members:
+        user_id = team_member['id']
+        member_data = client._r.get(f'api/user/{user_id}')
+        yield member_data
 
 
 def get_members(team_name):
@@ -62,6 +64,14 @@ def get_members(team_name):
         return [member for member in bar.iter(generator)]
 
 
+def rating_key(member):
+    perfs = member['perfs']
+    return max(
+        perfs.get('rapid', {}).get('rating', 0),
+        perfs.get('blitz', {}).get('rating', 0)
+    ) or 0
+
+
 def match_members(members, search, min_rating, title):
     for m in members:
         if title is not None:
@@ -69,10 +79,10 @@ def match_members(members, search, min_rating, title):
                 continue
 
         if min_rating:
-            rating_info = m['perfs'].get('rapid') or m['perfs'].get('blitz')
-            if not rating_info:
+            member_rating = rating_key(m)
+            if not member_rating:
                 continue
-            if rating_info['rating'] < min_rating:
+            if member_rating < min_rating:
                 continue
 
         names = [m['id']]
@@ -82,14 +92,8 @@ def match_members(members, search, min_rating, title):
             names.append(m['username'])
 
         if profile := m.get('profile'):
-            if first_name := profile.get('firstName'):
-                names.append(first_name)
-            if last_name := profile.get('lastName'):
-                names.append(last_name)
-            if first_name and last_name:
-                names.append(first_name + ' ' + last_name)
-                names.append(last_name + ',' + first_name)
-                names.append(last_name + ', ' + first_name)
+            if real_name := profile.get('realName'):
+                names.append(real_name)
             if location := profile.get('location'):
                 names.append(location)
 
@@ -108,15 +112,13 @@ def main():
     args = parser.parse_args()
 
     members = cached_request(functools.partial(get_members, args.team_name), args.team_name + '-members')
+    members.sort(key=rating_key)
 
     for m in match_members(members, args.NAME, args.min_rating, args.title):
         name = ''
         if profile := m.get('profile'):
-            if first_name := profile.get('firstName'):
-                name += first_name
-            
-            if last_name := profile.get('lastName'):
-                name += (' ' if name else '') + last_name
+            if real_name := profile.get('realName'):
+                name = real_name
 
             if location := profile.get('location'):
                 name += ', ' + location
