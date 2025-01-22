@@ -12,6 +12,7 @@ $PERSONALITIES = [
 	'Jester', 'Caveman', 'Mastermind', 'Swindler', 'Romantic'
 ];
 $LOWER_PERSONALITIES = array_map('strtolower', $PERSONALITIES);
+$DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 $opts = [
     'https' => [
@@ -39,6 +40,12 @@ function clear_cache($topic_id) {
 	foreach ($cached_files as $cf) {
 		unlink($cf);
 	}
+}
+
+function percent($num, $total) {
+	$ratio = $num / $total;
+	// From https://stackoverflow.com/a/14525504/35070
+	return sprintf('%.1f%%', $ratio * 100);
 }
 
 function download_topic($topic_id) {
@@ -82,9 +89,13 @@ function handle_error($message) {
 	die($message);
 }
 
+function pad($num) {
+	return str_pad($num, 2, '0', STR_PAD_LEFT);
+}
+
 $url = isset($_GET['url']) ? $_GET['url'] : false;
 $reset_cache = isset($_GET['reset_cache']) ? $_GET['reset_cache'] === '1' : false;
-$user_stats = isset($_GET['user_stats']) ? $_GET['user_stats'] === '1' : false;
+$output = isset($_GET['output']) ? $_GET['output'] : 'dump';
 
 $download = isset($_GET['download']) ? $_GET['download'] === '1' : false;
 if ($url) {
@@ -106,7 +117,12 @@ if ($url) {
 
 	$posts = download_topic($topic_id);
 
-	$filename = ($user_stats ? 'forumusers_' : 'forum_') . $topic_name . '.csv';
+	$basename = 'forum_';
+	if ($output === 'user_stats') {
+		$basename = 'forumusers_';
+	}
+
+	$filename = $basename . $topic_name . '.csv';
 	if ($download) {
 		header('Content-Type: text/csv');
 		header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -114,7 +130,7 @@ if ($url) {
 		header('Content-Type: text/plain');
 	}
 
-	if ($user_stats) {
+	if ($output === 'user_stats') {
 		$counts = [];
 		foreach ($posts as $p) {
 			$username = $p['username'];
@@ -129,6 +145,41 @@ if ($url) {
 		fputcsv($out, ['user', 'message_count']);
 		foreach ($counts as $username => $usercount) {
 			fputcsv($out, [$username, $usercount]);
+		}
+	} else if ($output === 'time_stats') {
+		$hour_counts = [];
+		$day_counts = [];
+		foreach ($DAYS as $idx => $_name) {
+			$day_counts[$idx] = 0;
+		}
+
+		foreach ($posts as $p) {
+			$hour = gmdate('G', $p['create_date']);
+			if (!isset($hour_counts[$hour])) {
+				$hour_counts[$hour] = 0;
+			}
+			$hour_counts[$hour]++;
+
+			$day = gmdate('w', $p['create_date']);
+			$day_counts[$day]++;
+		}
+		$total_count = count($posts);
+
+		$out = fopen('php://output', 'w');
+		fputcsv($out, ['Time', 'Posts', 'Percent']);
+		for ($hour = 0;$hour < 24;$hour++) {
+			$hour_str = pad($hour) . ':00-' . pad($hour) . ':59';
+			$hour_count = isset($hour_counts["$hour"]) ? $hour_counts["$hour"] : 0;
+			$percent = percent($hour_count, $total_count);
+			fputcsv($out, [$hour_str, $hour_count, $percent]);
+		}
+		fputcsv($out, ['', '', '']);
+
+		fputcsv($out, ['Day', 'Posts', 'Percent']);
+		foreach ($DAYS as $day_num => $day_str) {
+			$day_count = $day_counts[$day_num];
+			$percent = percent($day_count, $total_count);
+			fputcsv($out, [$day_str, $day_count, $percent]);
 		}
 	} else {
 		$out = fopen('php://output', 'w');
@@ -191,7 +242,7 @@ form, p {
 form {
 	margin-top: 1em;
 }
-label {
+form>label {
 	margin-top: 10px;
 	display: block;
 	font-size: 80%;
@@ -207,7 +258,11 @@ label {
 <form method="get">
 	<input type="text" name="url" placeholder="https://www.chess.com/forum/…" size="60"/>
 	<label><input type="checkbox" name="reset_cache" value="1">Reset cache</label>
-	<label><input type="checkbox" name="user_stats" value="1">User stats instead of posts</label>
+	<label>Output:
+		<label><input type="radio" name="output" value="dump" checked>All post data</label>
+		<label><input type="radio" name="output" value="user_stats">User stats</label>
+		<label><input type="radio" name="output" value="time_stats">Time stats</label>
+	</label>
 	<label><input type="checkbox" name="download" value="1">Download</label>
 	<div class="button-container">
 		<button type="submit">Export to CSV</button>
