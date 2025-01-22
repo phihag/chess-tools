@@ -148,10 +148,6 @@ if ($url) {
 		}
 	} else if ($output === 'time_stats') {
 		$hour_counts = [];
-		$day_counts = [];
-		foreach ($DAYS as $idx => $_name) {
-			$day_counts[$idx] = 0;
-		}
 
 		foreach ($posts as $p) {
 			$hour = gmdate('G', $p['create_date']);
@@ -159,9 +155,6 @@ if ($url) {
 				$hour_counts[$hour] = 0;
 			}
 			$hour_counts[$hour]++;
-
-			$day = gmdate('w', $p['create_date']);
-			$day_counts[$day]++;
 		}
 		$total_count = count($posts);
 
@@ -173,8 +166,19 @@ if ($url) {
 			$percent = percent($hour_count, $total_count);
 			fputcsv($out, [$hour_str, $hour_count, $percent]);
 		}
-		fputcsv($out, ['', '', '']);
+	} else if ($output === 'day_stats') {
+		$day_counts = [];
+		foreach ($DAYS as $idx => $_name) {
+			$day_counts[$idx] = 0;
+		}
 
+		foreach ($posts as $p) {
+			$day = gmdate('w', $p['create_date']);
+			$day_counts[$day]++;
+		}
+		$total_count = count($posts);
+
+		$out = fopen('php://output', 'w');
 		fputcsv($out, ['Day', 'Posts', 'Percent']);
 		foreach ($DAYS as $day_num => $day_str) {
 			$day_count = $day_counts[$day_num];
@@ -262,6 +266,7 @@ form>label {
 		<label><input type="radio" name="output" value="dump" checked>All post data</label>
 		<label><input type="radio" name="output" value="user_stats">User stats</label>
 		<label><input type="radio" name="output" value="time_stats">Time stats</label>
+		<label><input type="radio" name="output" value="day_stats">Day stats</label>
 	</label>
 	<label><input type="checkbox" name="download" value="1">Download</label>
 	<div class="button-container">
