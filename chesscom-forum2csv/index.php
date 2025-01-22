@@ -84,6 +84,8 @@ function handle_error($message) {
 
 $url = isset($_GET['url']) ? $_GET['url'] : false;
 $reset_cache = isset($_GET['reset_cache']) ? $_GET['reset_cache'] === '1' : false;
+$user_stats = isset($_GET['user_stats']) ? $_GET['user_stats'] === '1' : false;
+
 $download = isset($_GET['download']) ? $_GET['download'] === '1' : false;
 if ($url) {
 	if (!\preg_match('#^https://(?:www\.)?chess\.com/forum/.*?/([-_a-z0-9]+)(?:\?|$)#', $url, $matches)) {
@@ -104,7 +106,7 @@ if ($url) {
 
 	$posts = download_topic($topic_id);
 
-	$filename = 'forum_' . $topic_name . '.csv';
+	$filename = ($user_stats ? 'forumusers_' : 'forum_') . $topic_name . '.csv';
 	if ($download) {
 		header('Content-Type: text/csv');
 		header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -112,35 +114,53 @@ if ($url) {
 		header('Content-Type: text/plain');
 	}
 
-	$out = fopen('php://output', 'w');
-	fputcsv($out, [
-		'comment_id', 'comment_number', 'create_time',
-		'user_id', 'username', 'country_id', 'premium_status',
-		'chess_title', 'flair_code',
-		'personality', 'body',
-	]);
-	foreach ($posts as $p) {
-		$first_personality = '';
-		$first_personality_pos = INF;
-		$body_without_quotes = preg_replace('#<div class="fquote".*</div>#x', '', $p['body']);
-		$lower_body = strtolower($body_without_quotes);
-		for ($i = 0;$i < count($PERSONALITIES);$i++) {
-			$pos = strpos($lower_body, $LOWER_PERSONALITIES[$i]);
-			if ($pos !== false) {
-				if ($pos < $first_personality_pos) {
-					$first_personality_pos = $pos;
-					$first_personality = $PERSONALITIES[$i];
+	if ($user_stats) {
+		$counts = [];
+		foreach ($posts as $p) {
+			$username = $p['username'];
+			if (!\array_key_exists($username, $counts)) {
+				$counts[$username] = 0;
+			}
+			$counts[$username] += 1;
+		}
+		arsort($counts);
+
+		$out = fopen('php://output', 'w');
+		fputcsv($out, ['user', 'message_count']);
+		foreach ($counts as $username => $usercount) {
+			fputcsv($out, [$username, $usercount]);
+		}
+	} else {
+		$out = fopen('php://output', 'w');
+		fputcsv($out, [
+			'comment_id', 'comment_number', 'create_time',
+			'user_id', 'username', 'country_id', 'premium_status',
+			'chess_title', 'flair_code',
+			'personality', 'body',
+		]);
+		foreach ($posts as $p) {
+			$first_personality = '';
+			$first_personality_pos = INF;
+			$body_without_quotes = preg_replace('#<div class="fquote".*</div>#x', '', $p['body']);
+			$lower_body = strtolower($body_without_quotes);
+			for ($i = 0;$i < count($PERSONALITIES);$i++) {
+				$pos = strpos($lower_body, $LOWER_PERSONALITIES[$i]);
+				if ($pos !== false) {
+					if ($pos < $first_personality_pos) {
+						$first_personality_pos = $pos;
+						$first_personality = $PERSONALITIES[$i];
+					}
 				}
 			}
-		}
-		$time = date('c', $p['create_date']);
+			$time = date('c', $p['create_date']);
 
-		fputcsv($out, [
-			$p['comment_id'], $p['comment_number'], $time,
-			$p['user_id'], $p['username'], $p['country_id'], $p['premium_status'],
-			$p['chess_title'] ? $p['chess_title'] : '', $p['flair_code'],
-			$first_personality, $p['body'],
-		]);
+			fputcsv($out, [
+				$p['comment_id'], $p['comment_number'], $time,
+				$p['user_id'], $p['username'], $p['country_id'], $p['premium_status'],
+				$p['chess_title'] ? $p['chess_title'] : '', $p['flair_code'],
+				$first_personality, $p['body'],
+			]);
+		}
 	}
 
 	exit();
@@ -186,7 +206,8 @@ label {
 
 <form method="get">
 	<input type="text" name="url" placeholder="https://www.chess.com/forum/…" size="60"/>
-	<label><input type="checkbox" name="reset-cache" value="1">Reset cache</label>
+	<label><input type="checkbox" name="reset_cache" value="1">Reset cache</label>
+	<label><input type="checkbox" name="user_stats" value="1">User stats instead of posts</label>
 	<label><input type="checkbox" name="download" value="1">Download</label>
 	<div class="button-container">
 		<button type="submit">Export to CSV</button>
