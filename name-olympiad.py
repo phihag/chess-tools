@@ -6,9 +6,10 @@ import pathlib
 import xml.dom.minidom
 import xml.parsers.expat
 import statistics
-import time
+
 
 from lxml import etree
+
 
 def parse_players(xml_path):
 	doc = etree.parse(str(xml_path))
