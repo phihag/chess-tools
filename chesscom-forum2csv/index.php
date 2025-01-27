@@ -12,7 +12,16 @@ $PERSONALITIES = [
 	'Jester', 'Caveman', 'Mastermind', 'Swindler', 'Romantic'
 ];
 $LOWER_PERSONALITIES = array_map('strtolower', $PERSONALITIES);
-$DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+$DAYS = [
+	// ISO week day number (N on https://www.php.net/manual/en/datetime.format.php)
+	1 => 'Monday',
+	2 => 'Tuesday',
+	3 => 'Wednesday',
+	4 => 'Thursday',
+	5 => 'Friday',
+	6 => 'Saturday',
+	7 => 'Sunday',
+];
 
 $opts = [
     'https' => [
@@ -173,7 +182,7 @@ if ($url) {
 		}
 
 		foreach ($posts as $p) {
-			$day = gmdate('w', $p['create_date']);
+			$day = gmdate('N', $p['create_date']);
 			$day_counts[$day]++;
 		}
 		$total_count = count($posts);
