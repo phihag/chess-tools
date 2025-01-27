@@ -81,7 +81,7 @@ def main():
 			firstname = firstname_parts[0]
 		else:
 			firstname = p['name'].partition(' ')[0]
-		firstname = unify_name(firstname)
+		firstname = unify_name(firstname.partition('-')[0])
 		by_firstname[firstname].append(p)
 
 	TEAM_SIZE = 5
