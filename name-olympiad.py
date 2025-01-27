@@ -42,6 +42,7 @@ def unify_name(n):
 		'Alexandr': 'Alexander',
 		'Benjamin': 'Ben',
 		'Daniele': 'Daniel',
+		'Daniil': 'Daniel',
 		'Dmitri': 'Dmitry',
 		'Dmitriy': 'Dmitry',
 		'Ekaterina': 'Katerina',
