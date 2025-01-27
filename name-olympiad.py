@@ -58,11 +58,16 @@ def get_rating(player):
 
 def main():
 	parser = argparse.ArgumentParser(description='A fun name Olympiad')
+	parser.add_argument('-w', '--women', action='store_true', help='Only show female players')
 	args = parser.parse_args()
 
 	players = parse_players(pathlib.Path(__file__).parent / 'standard_rating_list.xml')
 	by_firstname = collections.defaultdict(list)
 	for p in players:
+		if args.women:
+			if p['sex'] != 'F':
+				continue
+
 		firstname_parts = p['name'].partition(',')[2].strip().split()
 		if firstname_parts:
 			firstname = firstname_parts[0]
