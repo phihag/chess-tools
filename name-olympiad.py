@@ -35,9 +35,10 @@ def get_titles(player):
 
 def unify_name(n):
 	return {
-		'Olexandr': 'Alex',
-		'Alexander': 'Alex',
-		'Alex': 'Alex',
+		'Olexandr': 'Alexander',
+		'Alexander': 'Alexander',
+		'Alexandr': 'Alexander',
+		'Alex': 'Alexander',
 		'John': 'Jon',
 		'Johnathan': 'Jon',
 		'Jonathan': 'Jon',
