@@ -128,7 +128,11 @@ if ($url) {
 
 	$basename = 'forum_';
 	if ($output === 'user_stats') {
-		$basename = 'forumusers_';
+		$basename = 'forum_users_';
+	} elseif ($output === 'time_stats') {
+		$basename = 'forum_time_';
+	} else if ($output === 'day_stats') {
+		$basename = 'forum_day_';
 	}
 
 	$filename = $basename . $topic_name . '.csv';
