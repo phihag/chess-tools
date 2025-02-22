@@ -45,7 +45,7 @@ function download_url($url) {
 function clear_cache($topic_id) {
 	if (!is_numeric($topic_id)) throw new Error('Invalid topic ID');
 
-	$cached_files = glob($CACHE_DIR . $topic_id . '-page*.json');
+	$cached_files = glob($GLOBALS['CACHE_DIR'] . $topic_id . '-page*.json');
 	foreach ($cached_files as $cf) {
 		unlink($cf);
 	}
