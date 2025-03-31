@@ -129,11 +129,5 @@ def main():
     print(f'FIDE performance: {fide_performance}')
     print(f'Perfect performance: {perfect_performance}')
 
-
-
-
-
-
-
 if __name__ == '__main__':
     main()
