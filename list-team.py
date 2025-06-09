@@ -65,6 +65,8 @@ def get_members(team_name):
 
 
 def rating_key(member):
+    if 'perfs' not in member:
+        return 0  # totally inactive
     perfs = member['perfs']
     return max(
         perfs.get('rapid', {}).get('rating', 0),
