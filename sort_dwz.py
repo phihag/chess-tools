@@ -57,7 +57,9 @@ def main():
     # Output sorted players
     writer = csv.writer(sys.stdout)
     for seed, (dwz, player) in enumerate(players, start=1):
-        writer.writerow([seed, player, dwz])
+        last_name, _, first_name = player.partition(',')
+        full_name = f'{first_name.strip()} {last_name.strip()}'
+        writer.writerow([seed, full_name])
 
 
 if __name__ == '__main__':
